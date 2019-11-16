@@ -161,11 +161,7 @@ module Reline
     end
 
     private def inner_readline(prompt, add_hist, multiline, &confirm_multiline_termination)
-      if ENV['RELINE_STDERR_TTY']
-        $stderr.reopen(ENV['RELINE_STDERR_TTY'], 'w')
-        $stderr.sync = true
-        $stderr.puts "Reline is used by #{Process.pid}"
-      end
+      preset_stderr
       otio = io_gate.prep
 
       may_req_ambiguous_char_width
@@ -305,6 +301,14 @@ module Reline
 
     def asni?
       defined?(Reline::ANSI) and io_gate == Reline::ANSI
+    end
+
+    def preset_stderr
+      if ENV['RELINE_STDERR_TTY']
+        $stderr.reopen(ENV['RELINE_STDERR_TTY'], 'w')
+        $stderr.sync = true
+        $stderr.puts "Reline is used by #{Process.pid}"
+      end
     end
 
     def preset_line_editor(prompt:, confirm_multiline_termination_proc:)
