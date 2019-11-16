@@ -53,69 +53,34 @@ module Reline
       yield self
     end
 
-    def completion_append_character=(val)
-      if val.nil?
-        @completion_append_character = nil
-      elsif val.size == 1
-        @completion_append_character = val.encode(Encoding::default_external)
-      elsif val.size > 1
-        @completion_append_character = val[0].encode(Encoding::default_external)
-      else
-        @completion_append_character = nil
-      end
-    end
+    %i(
+      basic_word_break_characters
+      completer_word_break_characters
+      basic_quote_characters
+      completer_quote_characters
+      filename_quote_characters
+      special_prefixes
+    ).each { |name|
+      define_method("#{name}=") { |v|
+        instance_variable_set(:"@#{name}", v.encode(Encoding::default_external))
+      }
+    }
 
-    def basic_word_break_characters=(v)
-      @basic_word_break_characters = v.encode(Encoding::default_external)
-    end
-
-    def completer_word_break_characters=(v)
-      @completer_word_break_characters = v.encode(Encoding::default_external)
-    end
-
-    def basic_quote_characters=(v)
-      @basic_quote_characters = v.encode(Encoding::default_external)
-    end
-
-    def completer_quote_characters=(v)
-      @completer_quote_characters = v.encode(Encoding::default_external)
-    end
-
-    def filename_quote_characters=(v)
-      @filename_quote_characters = v.encode(Encoding::default_external)
-    end
-
-    def special_prefixes=(v)
-      @special_prefixes = v.encode(Encoding::default_external)
-    end
-
-    def completion_proc=(p)
-      raise ArgumentError unless p.is_a?(Proc)
-      @completion_proc = p
-    end
-
-    def output_modifier_proc=(p)
-      raise ArgumentError unless p.is_a?(Proc)
-      @output_modifier_proc = p
-    end
-
-    def prompt_proc=(p)
-      raise ArgumentError unless p.is_a?(Proc)
-      @prompt_proc = p
-    end
-
-    def auto_indent_proc=(p)
-      raise ArgumentError unless p.is_a?(Proc)
-      @auto_indent_proc = p
-    end
+    %i(
+      completion_proc
+      output_modifier_proc
+      prompt_proc
+      auto_indent_proc
+      dig_perfect_match_proc
+    ).each { |name|
+      define_method("#{name}=") { |p|
+        raise ArgumentError unless p.is_a?(Proc)
+        instance_variable_set(:"@#{name}", p)
+      }
+    }
 
     def pre_input_hook=(p)
       @pre_input_hook = p
-    end
-
-    def dig_perfect_match_proc=(p)
-      raise ArgumentError unless p.is_a?(Proc)
-      @dig_perfect_match_proc = p
     end
 
     def input=(val)
