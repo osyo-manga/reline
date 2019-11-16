@@ -121,9 +121,9 @@ module Reline
     def input=(val)
       raise TypeError unless val.respond_to?(:getc) or val.nil?
       if val.respond_to?(:getc)
-        if defined?(Reline::ANSI) and Reline::IOGate == Reline::ANSI
+        if asni?
           Reline::ANSI.input = val
-        elsif Reline::IOGate == Reline::GeneralIO
+        elsif io_gate == Reline::GeneralIO
           Reline::GeneralIO.input = val
         end
       end
@@ -132,7 +132,7 @@ module Reline
     def output=(val)
       raise TypeError unless val.respond_to?(:write) or val.nil?
       @output = val
-      if defined?(Reline::ANSI) and Reline::IOGate == Reline::ANSI
+      if asni?
         Reline::ANSI.output = val
       end
     end
@@ -156,7 +156,7 @@ module Reline
     end
 
     def get_screen_size
-      Reline::IOGate.get_screen_size
+      io_gate.get_screen_size
     end
 
     def readmultiline(prompt = '', add_hist = false, &confirm_multiline_termination)
@@ -194,7 +194,7 @@ module Reline
         $stderr.sync = true
         $stderr.puts "Reline is used by #{Process.pid}"
       end
-      otio = Reline::IOGate.prep
+      otio = io_gate.prep
 
       may_req_ambiguous_char_width
       line_editor.reset(prompt)
@@ -218,7 +218,7 @@ module Reline
       unless config.test_mode
         config.read
         config.reset_default_key_bindings
-        Reline::IOGate::RAW_KEYSTROKE_CONFIG.each_pair do |key, func|
+        io_gate::RAW_KEYSTROKE_CONFIG.each_pair do |key, func|
           config.add_default_key_binding(key, func)
         end
       end
@@ -233,15 +233,15 @@ module Reline
           }
           break if line_editor.finished?
         end
-        Reline::IOGate.move_cursor_column(0)
+        io_gate.move_cursor_column(0)
       rescue StandardError => e
         line_editor.finalize
-        Reline::IOGate.deprep(otio)
+        io_gate.deprep(otio)
         raise e
       end
 
       line_editor.finalize
-      Reline::IOGate.deprep(otio)
+      io_gate.deprep(otio)
     end
 
     # Keystrokes of GNU Readline will timeout it with the specification of
@@ -255,7 +255,7 @@ module Reline
     private def read_io(keyseq_timeout, &block)
       buffer = []
       loop do
-        c = Reline::IOGate.getc
+        c = getc
         buffer << c
         result = key_stroke.match_status(buffer)
         case result
@@ -270,7 +270,7 @@ module Reline
             begin
               succ_c = nil
               Timeout.timeout(keyseq_timeout / 1000.0) {
-                succ_c = Reline::IOGate.getc
+                succ_c = getc
               }
             rescue Timeout::Error # cancel matching only when first byte
               block.([Reline::Key.new(c, c, false)])
@@ -284,7 +284,7 @@ module Reline
                 end
                 break
               else
-                Reline::IOGate.ungetc(succ_c)
+                ungetc(succ_c)
               end
             end
           end
@@ -306,7 +306,7 @@ module Reline
       begin
         escaped_c = nil
         Timeout.timeout(keyseq_timeout / 1000.0) {
-          escaped_c = Reline::IOGate.getc
+          escaped_c = io_gate.getc
         }
       rescue Timeout::Error # independent ESC
         block.([Reline::Key.new(c, c, false)])
@@ -324,13 +324,31 @@ module Reline
     end
 
     private def may_req_ambiguous_char_width
-      @ambiguous_width = 2 if Reline::IOGate == Reline::GeneralIO or STDOUT.is_a?(File)
+      @ambiguous_width = 2 if io_gate == Reline::GeneralIO or STDOUT.is_a?(File)
       return if ambiguous_width
-      Reline::IOGate.move_cursor_column(0)
+      io_gate.move_cursor_column(0)
       print "\u{25bd}"
-      @ambiguous_width = Reline::IOGate.cursor_pos.x
-      Reline::IOGate.move_cursor_column(0)
-      Reline::IOGate.erase_after_cursor
+      @ambiguous_width = io_gate.cursor_pos.x
+      io_gate.move_cursor_column(0)
+      io_gate.erase_after_cursor
+    end
+
+    private
+
+    def ungetc(...)
+      io_gate.ungetc(...)
+    end
+
+    def getc
+      io_gate.getc
+    end
+
+    def io_gate
+      Reline::IOGate
+    end
+
+    def asni?
+      defined?(Reline::ANSI) and io_gate == Reline::ANSI
     end
   end
 
