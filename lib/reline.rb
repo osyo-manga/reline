@@ -169,23 +169,7 @@ module Reline
       otio = io_gate.prep
 
       may_req_ambiguous_char_width
-      line_editor.reset(prompt)
-      if multiline
-        line_editor.multiline_on
-        if block_given?
-          line_editor.confirm_multiline_termination_proc = confirm_multiline_termination
-        end
-      else
-        line_editor.multiline_off
-      end
-      line_editor.output = output
-      line_editor.completion_proc = completion_proc
-      line_editor.output_modifier_proc = output_modifier_proc
-      line_editor.prompt_proc = prompt_proc
-      line_editor.auto_indent_proc = auto_indent_proc
-      line_editor.dig_perfect_match_proc = dig_perfect_match_proc
-      line_editor.pre_input_hook = pre_input_hook
-      line_editor.rerender
+      preset_line_editor(prompt: prompt, confirm_multiline_termination_proc: confirm_multiline_termination)
 
       unless config.test_mode
         config.read
@@ -321,6 +305,26 @@ module Reline
 
     def asni?
       defined?(Reline::ANSI) and io_gate == Reline::ANSI
+    end
+
+    def preset_line_editor(prompt:, confirm_multiline_termination_proc:)
+      line_editor.reset(prompt)
+      if multiline
+        line_editor.multiline_on
+        if block_given?
+          line_editor.confirm_multiline_termination_proc = confirm_multiline_termination
+        end
+      else
+        line_editor.multiline_off
+      end
+      line_editor.output = output
+      line_editor.completion_proc = completion_proc
+      line_editor.output_modifier_proc = output_modifier_proc
+      line_editor.prompt_proc = prompt_proc
+      line_editor.auto_indent_proc = auto_indent_proc
+      line_editor.dig_perfect_match_proc = dig_perfect_match_proc
+      line_editor.pre_input_hook = pre_input_hook
+      line_editor.rerender
     end
   end
 
