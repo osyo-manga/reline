@@ -53,6 +53,13 @@ module Reline
       yield self
     end
 
+    def completion_append_character=(val)
+      @completion_append_character = val.nil?      ? nil
+                                   : val.size == 1 ? val.encode(Encoding::default_external)
+                                   : val.size > 1  ? val[0].encode(Encoding::default_external)
+                                   :                 nil
+    end
+
     %i(
       basic_word_break_characters
       completer_word_break_characters
